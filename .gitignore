@@ -1,0 +1,7 @@
+*ipynb*
+__pycache__/
+*/__pycacahe__/
+*/*/__pycache__/
+weights
+logs*
+.vscode/
