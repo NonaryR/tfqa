@@ -12,43 +12,39 @@ from data import TextDataset, JsonChunkReader
 # from torch.utils.tensorboard import SummaryWriter
 # writer = SummaryWriter()
 
-def loaders(DEV_DATA, convert_fn, val_size, chunksize, batch_size, eval_collate_fn):
+def loaders(DATA, convert_fn, size, chunksize, batch_size, eval_collate_fn):
+    reader = JsonChunkReader(DATA, convert_fn, chunksize=chunksize)
+    loaders = []
     
-    valid_reader = JsonChunkReader(DEV_DATA, convert_fn, chunksize=chunksize)
-    val_loaders = []
-    
-    for examples in tqdm(valid_reader, total=int(np.ceil(val_size / chunksize)), desc="getting validation data"):
+    for examples in tqdm(reader, total=int(np.ceil(size / chunksize)), desc="getting validation data"):
         
-        valid_dataset = TextDataset(examples)
-                
-        valid_loader = DataLoader(valid_dataset, batch_size=batch_size, 
-                                  shuffle=False, collate_fn=eval_collate_fn,
-                                  pin_memory=True)
-        
-        val_loaders.append(valid_loader)
-
+        dataset = TextDataset(examples)
+        loader = DataLoader(dataset, batch_size=batch_size, 
+                            shuffle=False, collate_fn=eval_collate_fn,
+                            pin_memory=True)
+        loaders.append(loader)
         # break
     
-    return val_loaders
+    return loaders
 
-def train(model, TRAIN_DATA, DEV_DATA, logs, optimizer, scheduler, loss_fn, collate_fn, eval_collate_fn, convert_fn, \
-          n_epochs, batch_size, accumulation_steps, chunksize, train_size, val_size, eval_=True):
+
+def run(model, TRAIN_DATA, DEV_DATA, logs, optimizer, scheduler, loss_fn, collate_fn, eval_collate_fn, convert_fn, \
+          n_epochs, batch_size, accumulation_steps, chunksize, train_size, val_size, eval_="do"):
     
+    eval_ = True if eval_ == "do" else False
+
     if eval_:
         val_loaders = loaders(DEV_DATA, convert_fn, val_size, chunksize, batch_size, eval_collate_fn)
 
     for epoch in range(n_epochs):
 
         global_step = 0
-        model.train()
+        model.train(True)
         train_reader = JsonChunkReader(TRAIN_DATA, convert_fn, chunksize=chunksize)
         
-        for index, examples in enumerate(tqdm(train_reader, total=int(np.ceil(train_size / chunksize)), desc=f"training-epoch-{epoch}")):
-
-            # model.train()
+        for index, examples in enumerate(tqdm(train_reader, total=int(np.ceil(train_size / chunksize)), desc=f"training-epoch-{epoch+1}")):
             
             train_dataset = TextDataset(examples)
-            
             train_loader = DataLoader(train_dataset, batch_size=batch_size, 
                                       shuffle=True, collate_fn=collate_fn)
             
@@ -70,31 +66,27 @@ def train(model, TRAIN_DATA, DEV_DATA, logs, optimizer, scheduler, loss_fn, coll
                     model.zero_grad()
                 global_step += 1
 
-                # break
-
-            if (index+1) % 50 == 0 and eval_:
-                result = eval_model(model, val_loaders)
+            if (index+1) % 60 == 0 and eval_:
+                result, model = eval_model(model, val_loaders, f"index {index+1} from {epoch+1} epoch")
                 result["epoch"] = epoch
                 result["index"] = (index+1)
                 with open(f'{logs}/result.txt', 'a') as outfile:
                     json.dump(result, outfile, indent=4)
 
-                model.train()
+                # break
 
             del train_dataset
             # break
 
         if eval_:
-            result = eval_model(model, val_loaders)
+            result, model = eval_model(model, val_loaders, f"epoch {epoch+1}")
             result["epoch"] = epoch
             result["index"] = "end of epoch"
             with open(f'{logs}/result.txt', 'a') as outfile:
                 json.dump(result, outfile, indent=4)
 
-        torch.save(model.module.state_dict(), f"{logs}/model-{epoch}-epoch.bin")
+        torch.save(model.module.state_dict(), f"{logs}/model-{epoch+1}-epoch.bin")
         
         del train_reader
         gc.collect()
         
-        # torch.save(optimizer.state_dict(), f"{output_optimizer_file}-{epoch}")
-        # torch.save(amp.state_dict(), f"{output_amp_file}-{epoch}")

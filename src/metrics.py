@@ -1,17 +1,18 @@
-from sklearn.metrics import f1_score
 import torch
 from torch import nn
 from torch.utils.data import DataLoader
-from tqdm import tqdm
 import numpy as np
 import pandas
+from sklearn.metrics import f1_score
 
 from typing import List, Dict
+from tqdm import tqdm
 from result import Result
 
 def eval_model(
     model: nn.Module,
-    valid_loaders: List[DataLoader]
+    valid_loaders: List[DataLoader],
+    stage: str
 ) -> Dict[str, float]:
     """Compute validation score.
     
@@ -36,7 +37,7 @@ def eval_model(
     model.eval()
     with torch.no_grad():
         result = Result()
-        for valid_loader in tqdm(valid_loaders, desc="evaluate"):
+        for valid_loader in tqdm(valid_loaders, desc=f"evaluate on {stage}"):
             for inputs, examples in valid_loader:
                 input_ids, attention_mask, token_type_ids = inputs
                 y_preds = model(input_ids.cuda(non_blocking=True),
@@ -53,7 +54,7 @@ def eval_model(
                 indices = torch.stack((start_index, end_index)).transpose(0, 1)  # (batch_size, 2)
                 result.update(examples, logits.numpy(), indices.numpy(), class_preds.numpy())
 
-    return result.score()
+    return result.score(), model.train(True)
 
 # METRIC IMPLEMANTATION by KAGGLE
 def in_shorts(row):

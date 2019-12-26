@@ -6,7 +6,6 @@ import ujson as json
 import numpy as np
 import torch
 
-
 @dataclass
 class Example(object):
     example_id: int

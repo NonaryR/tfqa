@@ -60,14 +60,11 @@ class Result(object):
             doc_start, index, class_pred = self.results[example_id]
             
             example = self.examples[example_id]
-            
-            if doc_start + index[1] >= len(example.tokenized_to_original_index):
+            tokenized_to_original_index = example.tokenized_to_original_index
+            if doc_start + index[1] >= len(tokenized_to_original_index):
                 continue
             
-            tokenized_to_original_index = example.tokenized_to_original_index
-            
             short_start_index = tokenized_to_original_index[doc_start + index[0]]
-            
             short_end_index = tokenized_to_original_index[doc_start + index[1]]
 
             long_start_index = -1
@@ -127,7 +124,6 @@ class Result(object):
         long_scores = []
         short_scores = []
         for pred in self._generate_predictions():
-            # if doc_start + index[0] >= len(example.tokenized_to_original_index)
             example = pred['example']
             long_pred = pred['long_answer']
             short_pred = pred['short_answer']

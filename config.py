@@ -3,8 +3,8 @@ import sys
 sys.path.append("src")
 
 from functools import partial
-import argparse
 from pathlib import Path
+import argparse
 import ujson as json
 
 import torch
@@ -12,7 +12,7 @@ from apex import amp
 
 from src.utils import mklogs
 from src.data_utils import convert_data, collate_fn, eval_collate_fn
-from src.train import train
+from src.train import run
 
 from src.nets import BertForQuestionAnswering
 from src.spanbert.tokenization import BertTokenizer
@@ -23,9 +23,7 @@ from typing import List, Dict, Tuple
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2"
 
-
 # acc steps 0, max seq len (512, 800), max_question_len 32, learning rate
-
 
 def main(args):
     
@@ -41,6 +39,7 @@ def main(args):
     
     model = BertForQuestionAnswering.from_pretrained(args.bert_model)
     model = model.cuda()
+    
     optimizer = get_optimizer(model.named_parameters(), args.learning_rate)
     model, optimizer = amp.initialize(model, optimizer, opt_level='O1', verbosity=0)
     model = torch.nn.DataParallel(model)
@@ -52,22 +51,23 @@ def main(args):
     num_warmup_steps = int(num_train_optimization_steps * args.warmup)   
     scheduler = get_scheduler(optimizer, num_warmup_steps, num_train_optimization_steps)
 
-    train(  model,
-            TRAIN_DATA,
-            DEV_DATA,
-            logs_dir,
-            optimizer,
-            scheduler,
-            loss_fn,
-            collate_fn,
-            eval_collate_fn,
-            convert_fn,
-            args.n_epochs,
-            args.batch_size,
-            args.accumulation_steps,
-            args.chunksize,
-            args.train_size,
-            args.val_size,)
+    run(model,
+        TRAIN_DATA,
+        DEV_DATA,
+        logs_dir,
+        optimizer,
+        scheduler,
+        loss_fn,
+        collate_fn,
+        eval_collate_fn,
+        convert_fn,
+        args.n_epochs,
+        args.batch_size,
+        args.accumulation_steps,
+        args.chunksize,
+        args.train_size,
+        args.val_size,
+        eval_=args.do_eval)
 
 if __name__ == "__main__":
 
@@ -164,12 +164,16 @@ if __name__ == "__main__":
                         help="",
                         default=0.05)
 
-
     parser.add_argument('-b',
                         '--bert_model',
                         type=str,
                         help="which model",
-                        default='bert-base-uncased') 
+                        default='bert-base-uncased')
+    
+    parser.add_argument('-de',
+                        '--do_eval',
+                        type=str,
+                        default="do") 
 
     args = parser.parse_args()
     

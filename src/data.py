@@ -10,6 +10,7 @@ from typing import Callable, List
 import numpy as np
 from torch.utils.data import Dataset
 from data_utils import Example
+from inference import TestExample
 
 CPU_COUNT = os.cpu_count()
 
@@ -103,3 +104,24 @@ class TextDatasetOriginal(Dataset):
         if len(annotated) == 0:
             return random.choice(self.examples[index])
         return random.choice(annotated)
+
+
+class TestTextDataset(Dataset):
+    r"""Dataset for [TensorFlow 2.0 Question Answering](https://www.kaggle.com/c/tensorflow2-question-answering).
+    
+    Parameters
+    ----------
+    examples : list of Example
+        The whole Dataset.
+    """
+    
+    def __init__(self, examples: List[TestExample]):
+        self.examples = examples
+        
+    def __len__(self) -> int:
+        return len(self.examples)
+    
+    def __getitem__(self, index):
+        
+        for item in self.examples[index]:
+            return item
