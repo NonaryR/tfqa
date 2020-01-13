@@ -61,6 +61,9 @@ def convert_data(
     tokenized_to_original_index = []
     all_doc_tokens = []  # tokenized document text
     
+    # s, e = _find_short_range(data['long_answer_candidates'])
+    # doc_words_from_candidates = doc_words[s:e]
+
     for i, word in enumerate(doc_words):
         original_to_tokenized_index.append(len(all_doc_tokens))
         if re.match(r'<.+>', word):  # remove paragraph tag

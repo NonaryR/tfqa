@@ -123,5 +123,6 @@ class TestTextDataset(Dataset):
     
     def __getitem__(self, index):
         
-        for item in self.examples[index]:
-            return item
+        # for item in self.examples[index]:
+        #     return item
+        return self.examples[index]

@@ -2,7 +2,7 @@ from collections import defaultdict
 from data_utils import Example
 import torch
 import numpy as np
-
+import pandas as pd
 from typing import List, Generator, Dict
 
 class Result(object):
@@ -85,7 +85,7 @@ class Result(object):
     def end(self) -> Dict[str, Dict]:
         """Get predictions in submission format.
         """
-        preds = {}
+        preds =[] # {}
         for pred in self._generate_predictions():
             example = pred['example']
             long_start_index, long_end_index = pred['long_answer']
@@ -96,9 +96,11 @@ class Result(object):
             short_answer = f'{short_start_index}:{short_end_index}'
             class_pred = self.class_labels[class_pred.argmax()]
             short_answer += ' ' + class_pred if class_pred in ['YES', 'NO'] else ''
-            preds[f'{example.example_id}_long'] = long_answer
-            preds[f'{example.example_id}_short'] = short_answer
-        return preds
+            
+            preds.append({"example_id": f"{example.example_id}_long", "PredictionString": long_answer}) 
+            preds.append({"example_id": f"{example.example_id}_short", "PredictionString": short_answer}) 
+        
+        return pd.DataFrame(preds)
 
     def score(self) -> Dict[str, float]:
         """Calculate score of all examples.

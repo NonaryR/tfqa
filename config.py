@@ -5,7 +5,7 @@ sys.path.append("src")
 from functools import partial
 from pathlib import Path
 import argparse
-import ujson as json
+from typing import List, Dict, Tuple
 
 import torch
 from apex import amp
@@ -19,11 +19,9 @@ from src.spanbert.tokenization import BertTokenizer
 from src.optimizers import get_optimizer, get_scheduler
 from src.losses import loss_fn
 
-from typing import List, Dict, Tuple
-
 os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2"
 
-# acc steps 0, max seq len (512, 800), max_question_len 32, learning rate
+# acc steps 0+, max seq len (512+, 800-), max_question_len 32+, cased+, learning rate +
 
 def main(args):
     
@@ -102,7 +100,7 @@ if __name__ == "__main__":
                         '--n_epochs',
                         type=int,
                         help='number of epochs',
-                        default=2)
+                        default=6)
 
     parser.add_argument('-l',
                         '--logs_dir',

@@ -1,8 +1,8 @@
-from spanbert.optimization import get_linear_schedule_with_warmup, AdamW
+from spanbert.optimization import get_linear_schedule_with_warmup, AdamW, BertAdam
 from functools import partial
 
 
-OPTS = {"adamw": partial(AdamW)}
+OPTS = {"adamw": partial(AdamW), "bert-adam": BertAdam}
 SCHEDULERS = {"linear-warmup": get_linear_schedule_with_warmup}
 
 

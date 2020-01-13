@@ -69,7 +69,7 @@ def run(model, TRAIN_DATA, DEV_DATA, logs, optimizer, scheduler, loss_fn, collat
             if (index+1) % 60 == 0 and eval_:
                 result, model = eval_model(model, val_loaders, f"index {index+1} from {epoch+1} epoch")
                 result["epoch"] = epoch
-                result["index"] = (index+1)
+                result["index"] = index+1
                 with open(f'{logs}/result.txt', 'a') as outfile:
                     json.dump(result, outfile, indent=4)
 
